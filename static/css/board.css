@@ -1,0 +1,157 @@
+/* ════════════════════════════════════════
+   Soruşturma Masası — Win7 Aero + mantar pano
+════════════════════════════════════════ */
+.board-shell { margin: -16px -18px -28px; display: flex; flex-direction: column; height: calc(100vh - 190px); min-height: 520px; }
+
+/* ── Dosya sekmeleri (IE8 / Explorer stili) ── */
+.case-tabs {
+  display: flex; align-items: flex-end; gap: 2px; padding: 6px 8px 0; overflow-x: auto; flex-shrink: 0;
+  background: linear-gradient(#e9f0fa, #d3dfef); border-bottom: 1px solid #98a9c1;
+}
+.case-tab {
+  display: flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; max-width: 220px; cursor: pointer; white-space: nowrap;
+  font-size: 12px; color: #1b2a40; user-select: none;
+  background: linear-gradient(#f6f9fd 0%, #dfe8f4 48%, #cfdcee 50%, #dbe5f3 100%);
+  border: 1px solid #8a9db6; border-bottom: none; border-radius: 4px 4px 0 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.7);
+}
+.case-tab:hover { background: linear-gradient(#f3fbff, #d8effc 48%, #bfe3f8 50%, #d2ecfb); border-color: var(--hl); }
+.case-tab.active {
+  background: #fff; font-weight: 600; color: var(--head); margin-bottom: -1px; padding-bottom: 5px;
+  box-shadow: inset 0 2px 0 #4a90d9, inset 0 0 0 1px rgba(255,255,255,.9);
+}
+.case-name { overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+.case-count { font-size: 10px; color: #5a6779; background: #e6edf7; border: 1px solid #c3cfe0; border-radius: 8px; padding: 0 5px; }
+.case-x { border: none; background: transparent; cursor: pointer; font-size: 14px; line-height: 14px; color: #6b7a90; border-radius: 2px; padding: 0 3px; }
+.case-x:hover { background: linear-gradient(#e8a58f, #d0614a 48%, #bf2a12 50%, #d4513a); color: #fff; }
+.case-add {
+  margin: 0 0 2px 4px; width: 26px; height: 22px; cursor: pointer; font-size: 14px; color: #1b2a40;
+  border: 1px solid #8a9db6; border-radius: 3px; background: var(--btn-grad); box-shadow: inset 0 0 0 1px rgba(255,255,255,.8);
+}
+.case-add:hover { background: var(--btn-hover); border-color: var(--hl); }
+
+/* ── Araç çubuğu ── */
+.board-toolbar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 3px; padding: 4px 8px; flex-shrink: 0;
+  background: linear-gradient(#fdfeff 0%, #e8eff8 48%, #dbe5f3 50%, #e7eef8 100%); border-bottom: 1px solid #98a9c1;
+}
+.tb-label { font-size: 12px; color: var(--muted); margin-right: 2px; }
+.tb-group { display: inline-flex; flex-wrap: wrap; gap: 2px; }
+.tb-sep { width: 1px; height: 22px; background: linear-gradient(#b4c1d3, #fff); margin: 0 5px; }
+.tb-btn {
+  padding: 2px 8px; font-size: 12px; font-family: var(--font); color: #1b2a40; cursor: pointer; white-space: nowrap;
+  border: 1px solid transparent; border-radius: 3px; background: transparent;
+}
+.tb-btn span { font-size: 11.5px; }
+.tb-btn:hover { border-color: var(--hl2); background: var(--btn-hover); box-shadow: inset 0 0 0 1px rgba(255,255,255,.8); }
+.tb-btn:active { background: var(--btn-press); border-color: #2c628b; }
+.board-search { margin-left: auto; width: 200px; }
+
+/* ── Ana alan ── */
+.board-main { display: flex; flex: 1; min-height: 0; }
+
+/* ── Mantar pano ── */
+.board-view {
+  position: relative; flex: 1; overflow: hidden; cursor: grab; touch-action: none;
+  background-color: var(--board-c);
+  background-image:
+    radial-gradient(var(--board-d1) 1px, transparent 1.6px),
+    radial-gradient(var(--board-d2) 1px, transparent 1.6px);
+  background-size: 9px 9px, 13px 13px; background-position: 0 0, 4px 5px;
+  box-shadow: inset 0 0 60px var(--board-in), inset 0 0 0 2px var(--board-e1), inset 0 0 0 4px var(--board-e2);
+}
+.board-view.panning { cursor: grabbing; }
+.board-world { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; }
+.board-svg { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; pointer-events: none; z-index: 1; }
+#board-nodes { position: absolute; left: 0; top: 0; z-index: 2; }
+
+.board-empty {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  pointer-events: none; color: var(--board-ink); text-align: center; padding: 20px; text-shadow: 0 1px 0 rgba(255,255,255,.35);
+}
+.board-empty div { font-size: 54px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.3)); }
+.board-empty p { font-size: 13px; max-width: 380px; }
+.board-tip { font-size: 12px !important; opacity: .85; }
+
+/* ── İplikler ── */
+.bedge-hit { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; cursor: pointer; }
+.bedge-shadow { fill: none; stroke: rgba(0,0,0,.28); stroke-width: 3; stroke-linecap: round; }
+.bedge-line { fill: none; stroke-width: 2.6; stroke-linecap: round; }
+.bedge:hover .bedge-line, .bedge.sel .bedge-line { stroke-width: 4; filter: drop-shadow(0 0 3px rgba(255,255,255,.9)); }
+.bedge-temp { fill: none; stroke: #c0281c; stroke-width: 2.6; stroke-dasharray: 6 4; stroke-linecap: round; }
+.bedge-label { pointer-events: none; }
+.bedge-label rect { fill: #fffbe6; stroke: #a8936a; stroke-width: 1; }
+.bedge-label text { font: 11px 'Segoe UI', Tahoma, sans-serif; fill: #3a2a10; }
+.board-svg.has-sel .bedge:not(.rel):not(.sel) { opacity: .28; }
+
+/* ── Kartlar (kâğıt + iğne) ── */
+.bnode {
+  position: absolute; padding-top: 6px; cursor: move; user-select: none;
+  background: #fffef6; border: 1px solid #cfc7a8; border-radius: 2px;
+  box-shadow: 1px 4px 9px rgba(40,20,0,.5), inset 0 0 0 1px rgba(255,255,255,.8);
+  transition: box-shadow .12s, opacity .15s, filter .15s;
+}
+.bnode:hover { box-shadow: 2px 6px 14px rgba(40,20,0,.55), inset 0 0 0 1px #fff; }
+.bnode.sel { outline: 2px solid #3d8bdc; outline-offset: 1px; box-shadow: 0 0 0 4px rgba(120,190,255,.45), 2px 6px 14px rgba(40,20,0,.55); z-index: 5; }
+.bnode.dragging { z-index: 20; box-shadow: 4px 12px 22px rgba(40,20,0,.6); cursor: grabbing; }
+.bnode.target { outline: 3px dashed #1e9a47; outline-offset: 2px; }
+.bnode.dim { opacity: .22; filter: grayscale(.8); }
+.bnode.match { outline: 2px solid #e8a400; box-shadow: 0 0 0 5px rgba(255,200,60,.55); }
+.bpin {
+  position: absolute; left: 50%; top: -3px; width: 15px; height: 15px; margin-left: -7px; border-radius: 50%; cursor: crosshair; z-index: 3;
+  background: radial-gradient(circle at 35% 30%, #ff9c8f 0%, #d8301f 45%, #7d1108 100%);
+  box-shadow: 0 2px 3px rgba(0,0,0,.6), inset 0 -1px 2px rgba(0,0,0,.4);
+}
+.bpin:hover { transform: scale(1.3); box-shadow: 0 0 8px 2px rgba(255,80,60,.8), 0 2px 3px rgba(0,0,0,.6); }
+.bnode-head {
+  display: flex; align-items: center; gap: 5px; padding: 3px 7px; font-size: 11px; font-weight: 600; color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,.4);
+  background: linear-gradient(rgba(255,255,255,.28), rgba(255,255,255,0) 55%), var(--c, var(--acc-c));
+}
+.bnote-ind { margin-left: auto; }
+.bnode-body { padding: 6px 8px 8px; }
+.bimg { display: block; width: 100%; height: 86px; object-fit: cover; margin-bottom: 5px; border: 1px solid #c9c2a4; background: #eee; }
+.blabel { font-size: 12.5px; font-weight: 600; color: #231a0a; word-break: break-word; line-height: 1.25; }
+.bsub { font-size: 10.5px; color: #6a5d40; margin-top: 2px; word-break: break-all; max-height: 3.6em; overflow: hidden; }
+
+/* ── Yan panel (Win7 ayrıntı bölmesi) ── */
+.board-side {
+  width: 280px; flex-shrink: 0; overflow-y: auto; padding: 10px;
+  background: linear-gradient(#fafcff, #eaf0f9); border-left: 1px solid #98a9c1;
+}
+.side-head { padding: 5px 9px; margin: -10px -10px 10px; font-weight: 600; font-size: 13px; color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,.4); background: linear-gradient(rgba(255,255,255,.3), rgba(255,255,255,0) 55%), var(--c, var(--acc-c)); }
+.side-f { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; font-size: 11.5px; color: #1b2a40; }
+.side-f input, .side-f textarea, .side-f select, .wdlg-field input, .wdlg-field textarea, .wdlg-field select {
+  padding: 4px 6px; font: 12.5px var(--font); color: var(--text); background: #fff; border: 1px solid #abadb3; border-top-color: #8e9096; border-radius: 2px; outline: none; resize: vertical;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.08);
+}
+.side-f input:focus, .side-f textarea:focus, .side-f select:focus, .wdlg-field input:focus, .wdlg-field textarea:focus, .wdlg-field select:focus { border-color: #3d7bc2; box-shadow: 0 0 0 1px #9fc6f0, 0 0 6px rgba(61,123,194,.45); }
+.side-btns { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 10px; }
+.side-sec { margin: 10px 0 5px; padding-bottom: 2px; font-size: 11px; font-weight: 600; color: var(--head); border-bottom: 1px solid #c9d6e8; }
+.side-link { display: flex; justify-content: space-between; gap: 8px; padding: 3px 6px; margin-bottom: 2px; font-size: 11.5px; cursor: pointer; background: #fff; border: 1px solid #d3deed; }
+.side-link:hover { background: linear-gradient(#f2f9ff, #dceffc); border-color: #9cc5ea; }
+.side-link em { color: var(--muted); font-style: normal; font-size: 10.5px; text-align: right; }
+.side-muted, .side-empty { font-size: 11.5px; color: var(--muted); }
+.side-empty { padding: 20px 6px; text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.side-edge { text-align: center; font-size: 12px; margin-bottom: 10px; padding: 6px; background: #fff; border: 1px solid #d3deed; }
+.side-stats { display: flex; gap: 6px; margin-bottom: 6px; }
+.side-stats div { flex: 1; text-align: center; padding: 5px 2px; background: #fff; border: 1px solid #d3deed; }
+.side-stats b { display: block; font-size: 20px; font-weight: 300; color: var(--head); }
+.side-stats span { font-size: 10.5px; color: var(--muted); }
+.side-tips { padding-left: 16px; font-size: 11.5px; color: #3a475c; line-height: 1.7; }
+.side-tips kbd { padding: 0 4px; font: 10.5px var(--mono); background: #f3f3f3; border: 1px solid #aaa; border-radius: 2px; }
+
+/* ── Win7 diyalog penceresi ── */
+.wdlg-overlay { position: fixed; inset: 0; z-index: 900; display: flex; align-items: center; justify-content: center; background: rgba(0,20,60,.3); animation: fade-in .15s ease; }
+.wdlg {
+  width: 400px; max-width: calc(100vw - 24px); padding: 0 7px 7px; border: 1px solid rgba(0,0,0,.62); border-radius: 7px;
+  background: var(--glass); backdrop-filter: blur(var(--blur)) saturate(1.4); -webkit-backdrop-filter: blur(var(--blur)) saturate(1.4);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 14px 40px rgba(0,10,40,.7);
+}
+.wdlg-title { display: flex; align-items: flex-start; justify-content: space-between; height: 26px; padding-left: 4px; line-height: 26px; font-size: 12px; color: #000; text-shadow: 0 0 8px #fff, 0 0 4px #fff; }
+.wdlg-x { margin-right: -3px; width: 42px; height: 18px; line-height: 16px; }
+.wdlg-body { padding: 14px; display: flex; flex-direction: column; gap: 9px; background: #f3f6fb; border: 1px solid #98a9c1; }
+.wdlg-msg { font-size: 12.5px; color: #1b2330; }
+.wdlg-field { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: #1b2a40; }
+.wdlg-btns { display: flex; justify-content: flex-end; gap: 8px; margin: 6px -14px -14px; padding: 9px 14px; background: linear-gradient(#e9eef6, #d6dfec); border-top: 1px solid #b4c1d3; }
+.wdlg-ok { padding: 3px 22px; font-size: 12px; }
+
+@media (max-width: 900px) { .board-side { display: none; } }

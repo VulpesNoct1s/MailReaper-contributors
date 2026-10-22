@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="color-scheme" content="only light">
+<meta name="darkreader-lock">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MailReaper — OSINT Workstation</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="stylesheet" href="/static/css/board.css">
+<script src="/static/js/theme.js"></script>
+</head>
+<body>
+<div class="desktop">
+<div class="win" id="win">
+
+  <!-- TITLE BAR (Aero glass) -->
+  <header class="header">
+    <div class="logo">
+      <span class="logo-icon">🛡️</span>
+      <span class="logo-text">MailReaper <span class="accent">OSINT Workstation</span></span>
+      <span class="version-badge">v{{ version }}</span>
+    </div>
+    <div class="win-controls">
+      <button class="wc wc-min" id="wc-min" title="Küçült">&#x2013;</button>
+      <button class="wc wc-max" id="wc-max" title="Büyüt">&#x25A1;</button>
+      <button class="wc wc-close" id="wc-close" title="Kapat">&#x2715;</button>
+    </div>
+  </header>
+
+  <!-- COMMAND BAR -->
+  <nav class="nav">
+    <button class="nav-btn active" data-panel="scan"><span class="nav-ico">🔍</span> Hızlı Tara</button>
+    <button class="nav-btn" data-panel="target"><span class="nav-ico">🎯</span> Hedef Profili</button>
+    <button class="nav-btn" data-panel="board"><span class="nav-ico">🗂️</span> Soruşturma Masası</button>
+    <button class="nav-btn" data-panel="history"><span class="nav-ico">📜</span> Geçmiş</button>
+    <button class="nav-btn" data-panel="about"><span class="nav-ico">ℹ️</span> Hakkında</button>
+    <button class="nav-tool" id="open-theme" title="Renk, duvar kağıdı ve cam ayarları"><span class="nav-ico">🎨</span> Kişiselleştir</button>
+  </nav>
+
+<main class="main">
+
+  <!-- ═══════════════ SCAN PANEL ═══════════════ -->
+  <section id="panel-scan" class="panel active">
+
+    <!-- Multi-input search box -->
+    <div class="search-container">
+      <h2 class="search-title">OSINT Hedef Tanımla</h2>
+      <p class="search-subtitle">Email, kullanıcı adı, domain — tek veya kombine gir. Platform toplayıp sana verir.</p>
+
+      <div class="input-grid">
+        <div class="input-group">
+          <label class="input-label">📧 Email</label>
+          <input type="email" id="inp-email" class="osint-input" placeholder="hedef@domain.com" spellcheck="false" autocomplete="off">
+        </div>
+        <div class="input-group">
+          <label class="input-label">👤 Kullanıcı Adı / Nick</label>
+          <input type="text" id="inp-username" class="osint-input" placeholder="@username veya nick" spellcheck="false" autocomplete="off">
+        </div>
+        <div class="input-group">
+          <label class="input-label">🌐 Domain</label>
+          <input type="text" id="inp-domain" class="osint-input" placeholder="example.com" spellcheck="false" autocomplete="off">
+        </div>
+        <div class="input-group">
+          <label class="input-label">🔤 İsim (opsiyonel)</label>
+          <input type="text" id="inp-name" class="osint-input" placeholder="Ad Soyad" spellcheck="false" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="scan-actions">
+        <button id="scan-btn" class="scan-btn">
+          <span class="scan-btn-icon">⚡</span>
+          <span class="scan-btn-text">TARA</span>
+        </button>
+        <button id="clear-btn" class="clear-btn">✕ Temizle</button>
+      </div>
+
+      <div class="module-tags">
+        <span class="module-tag">📧 Email Validate</span>
+        <span class="module-tag">🔌 SMTP Probe</span>
+        <span class="module-tag">🌐 DNS/WHOIS/SSL</span>
+        <span class="module-tag active-tag">🛰️ Web Recon</span>
+        <span class="module-tag active-tag">📡 IP/ASN</span>
+        <span class="module-tag">🖼️ Gravatar</span>
+        <span class="module-tag">🐙 GitHub Deep</span>
+        <span class="module-tag">📱 Reddit Profil</span>
+        <span class="module-tag">🟠 HackerNews</span>
+        <span class="module-tag active-tag">🕵️ 125+ Site Sherlock (güven skorlu)</span>
+        <span class="module-tag active-tag">🔏 crt.sh Sertifika</span>
+        <span class="module-tag active-tag">🕰️ Wayback Machine</span>
+        <span class="module-tag">📋 Paste/Stealer</span>
+        <span class="module-tag active-tag">🔗 Dork Generator</span>
+        <span class="module-tag active-tag">🖼️ EXIF Metadata</span>
+        <span class="module-tag active-tag">🧠 Korelasyon</span>
+        <span class="module-tag active-tag">⚠️ Risk Skoru</span>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div id="progress-section" style="display:none">
+      <div class="progress-header">
+        <span id="progress-label">Başlatılıyor...</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+    </div>
+
+    <!-- Results area -->
+    <div id="results-area" style="display:none">
+
+      <!-- Intelligence Summary (Correlation) -->
+      <div id="card-correlation" class="intel-card" style="display:none">
+        <div class="intel-card-header">
+          <span>🧠 Intelligence Summary</span>
+          <div class="export-btns">
+            <button class="export-btn" id="export-json-btn">⬇️ JSON</button>
+            <button class="export-btn" id="export-html-btn">📄 HTML Rapor</button>
+            <button class="export-btn" id="to-board-btn" title="Bulguları aktif soruşturma dosyasına aktar">📌 Masaya Aktar</button>
+            <span id="scan-time" class="scan-time"></span>
+          </div>
+        </div>
+        <div class="intel-body" id="body-correlation"></div>
+      </div>
+
+      <!-- Risk Score -->
+      <div id="card-risk" style="display:none">
+        <div class="risk-row">
+          <div class="risk-circle-wrap">
+            <svg class="risk-svg" viewBox="0 0 120 120">
+              <circle class="risk-bg" cx="60" cy="60" r="52"/>
+              <circle class="risk-arc" id="risk-arc" cx="60" cy="60" r="52"
+                stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+            </svg>
+            <div class="risk-inner">
+              <span class="risk-num" id="risk-num">0</span>
+              <span class="risk-label">/100</span>
+            </div>
+          </div>
+          <div class="risk-details">
+            <div class="risk-grade" id="risk-grade">?</div>
+            <div class="risk-grade-text" id="risk-grade-text">...</div>
+            <div id="risk-factors-list" class="risk-factors"></div>
+          </div>
+          <div id="risk-cat-bars" class="risk-cat-bars"></div>
+        </div>
+      </div>
+
+      <!-- Network Graph -->
+      <div id="card-graph" class="result-card" style="display:none">
+        <div class="card-header">
+          <span class="card-icon">🕸️</span>
+          <span class="card-title">İlişki Ağı</span>
+          <span class="card-badge" id="graph-node-count"></span>
+        </div>
+        <div id="graph-container" class="graph-container"></div>
+      </div>
+
+      <!-- Sherlock Platform Grid -->
+      <div id="card-username_osint" class="result-card wide" style="display:none">
+        <div class="card-header">
+          <span class="card-icon">🕵️</span>
+          <span class="card-title">Sherlock — Platform Taraması</span>
+          <span class="card-badge" id="sherlock-count"></span>
+        </div>
+        <div id="body-username_osint" class="card-body"></div>
+      </div>
+
+      <!-- 2-col grid for smaller cards -->
+      <div class="two-col-grid">
+
+        <!-- Email Validator -->
+        <div id="card-email_validator" class="result-card" style="display:none">
+          <div class="card-header">
+            <span class="card-icon">📧</span>
+            <span class="card-title">Email Validator</span>
+            <span class="card-badge" id="badge-email_validator"></span>
+          </div>
+          <div id="body-email_validator" class="card-body"></div>
+        </div>
+
+        <!-- Email Parts -->
+        <div id="card-email_parts" class="result-card" style="display:none">
+          <div class="card-header">
+            <span class="card-icon">🔬</span>
+            <span class="card-title">Email Analizi</span>
+          </div>
+          <div id="body-email_parts" class="card-body"></div>
+        </div>
+
+        <!-- SMTP -->
+        <div id="card-smtp_probe" class="result-card" style="display:none">
+          <div class="card-header">
+            <span class="card-icon">🔌</span>
+            <span class="card-title">SMTP Probe</span>
+            <span class="card-badge" id="badge-smtp_probe"></span>
+          </div>
+          <div id="body-smtp_probe" class="card-body"></div>
+        </div>
+
+        <!-- Gravatar -->
+        <div id="card-gravatar" class="result-card" style="display:none">
+          <div class="card-header">
+            <span class="card-icon">🖼️</span>
+            <span class="card-title">Gravatar</span>
+            <span class="card-badge" id="badge-gravatar"></span>
+          </div>
+          <div id="body-gravatar" class="card-body"></div>
+        </div>
+
+        <!-- GitHub -->
+        <div id="card-github_search" class="result-card" style="display:none">
+          <div class="card-header">
+            <span class="card-icon">🐙</span>
+            <span class="card-title">GitHub Arama</span>
+            <span class="card-badge" id="badge-github_search"></span>
+          </div>
+          <div id="body-github_search" class="card-body"></div>
+        </div>
+
+        <!-- GitHub Deep -->
+        <div id="card-github_deep" class="result-card" style="display:none">
+          <div class="card-header">
+            <span class="card-icon">🐙</span>
+            <span class="card-title">GitHub Deep Profile</span>
+            <span class="card-badge" id="badge-github_deep"></span>
+          </div>
+          <div id="body-github_deep" class="card-body"></div>
+        </div>
+
+        <!-- Reddit -->
+        <div id="card-reddit" class="result-card" style="display:none">
+          <div class="card-header">
+            <span class="card-icon">📱</span>
+            <span class="card-title">Reddit Profil</span>
+            <span class="card-badge" id="badge-reddit"></span>
+          </div>
+          <div id="body-reddit" class="card-body"></div>
+        </div>
+
+        <!-- HackerNews -->
+        <div id="card-hackernews" class="result-card" style="display:none">
+          <div class="card-header">
+            <span class="card-icon">🟠</span>
+            <span class="card-title">HackerNews</span>
+            <span class="card-badge" id="badge-hackernews"></span>
+          </div>
+          <div id="body-hackernews" class="card-body"></div>
+        </div>
+
+        <!-- Paste/Stealer -->
+        <div id="card-pastebin" class="result-card" style="display:none">
+          <div class="card-header">
+            <span class="card-icon">📋</span>
+            <span class="card-title">Paste & Stealer Logs</span>
+            <span class="card-badge" id="badge-pastebin"></span>
+          </div>
+          <div id="body-pastebin" class="card-body"></div>
+        </div>
+
+        <!-- EXIF -->
+        <div id="card-exif_analysis" class="result-card" style="display:none">
+          <div class="card-header">
+            <span class="card-icon">🖼️</span>
+            <span class="card-title">EXIF / Avatar Metadata</span>
+            <span class="card-badge" id="badge-exif_analysis"></span>
+          </div>
+          <div id="body-exif_analysis" class="card-body"></div>
+        </div>
+
+      </div><!-- end two-col-grid -->
+
+      <!-- DNS - full width -->
+      <div id="card-dns_analysis" class="result-card" style="display:none">
+        <div class="card-header">
+          <span class="card-icon">🌐</span>
+          <span class="card-title">DNS / WHOIS / SSL</span>
+          <span class="card-badge" id="badge-dns_analysis"></span>
+        </div>
+        <div id="body-dns_analysis" class="card-body"></div>
+      </div>
+
+      <!-- Web Recon -->
+      <div id="card-web_recon" class="result-card" style="display:none">
+        <div class="card-header">
+          <span class="card-icon">🛰️</span>
+          <span class="card-title">Web Recon — Teknoloji &amp; Güvenlik Başlıkları</span>
+          <span class="card-badge" id="badge-web_recon"></span>
+        </div>
+        <div id="body-web_recon" class="card-body"></div>
+      </div>
+
+      <!-- IP Intel -->
+      <div id="card-ip_intel" class="result-card" style="display:none">
+        <div class="card-header">
+          <span class="card-icon">📡</span>
+          <span class="card-title">IP / ASN / Reverse DNS</span>
+          <span class="card-badge" id="badge-ip_intel"></span>
+        </div>
+        <div id="body-ip_intel" class="card-body"></div>
+      </div>
+
+      <!-- Social Media - full width -->
+      <div id="card-social" class="result-card" style="display:none">
+        <div class="card-header">
+          <span class="card-icon">📱</span>
+          <span class="card-title">Sosyal Medya Varlığı (45+ Site)</span>
+          <span class="card-badge" id="badge-social"></span>
+        </div>
+        <div id="body-social" class="card-body"></div>
+      </div>
+
+      <!-- crt.sh -->
+      <div id="card-crt_search" class="result-card" style="display:none">
+        <div class="card-header">
+          <span class="card-icon">🔏</span>
+          <span class="card-title">crt.sh — SSL Sertifika Şeffaflığı</span>
+          <span class="card-badge" id="badge-crt_search"></span>
+        </div>
+        <div id="body-crt_search" class="card-body"></div>
+      </div>
+
+      <!-- Wayback -->
+      <div id="card-wayback" class="result-card" style="display:none">
+        <div class="card-header">
+          <span class="card-icon">🕰️</span>
+          <span class="card-title">Wayback Machine — Arşiv Geçmişi</span>
+          <span class="card-badge" id="badge-wayback"></span>
+        </div>
+        <div id="body-wayback" class="card-body"></div>
+      </div>
+
+      <!-- Dork Generator - full width -->
+      <div id="card-dork_gen" class="result-card" style="display:none">
+        <div class="card-header">
+          <span class="card-icon">🔗</span>
+          <span class="card-title">Dork Generator</span>
+          <span class="card-badge" id="badge-dork_gen"></span>
+        </div>
+        <div id="body-dork_gen" class="card-body"></div>
+      </div>
+
+      <!-- Username Generator -->
+      <div id="card-username_gen" class="result-card" style="display:none">
+        <div class="card-header">
+          <span class="card-icon">👤</span>
+          <span class="card-title">Username Permütasyonları</span>
+          <span class="card-badge" id="badge-username_gen"></span>
+        </div>
+        <div id="body-username_gen" class="card-body"></div>
+      </div>
+
+    </div><!-- end results-area -->
+
+    <!-- Live Log -->
+    <div id="log-section" style="display:none" class="log-section">
+      <div class="log-header">
+        <span>📡 Canlı Log</span>
+        <button id="log-clear-btn" class="log-clear-btn">Temizle</button>
+      </div>
+      <div id="log-body" class="log-body"></div>
+    </div>
+
+  </section>
+
+
+  <!-- ═══════════════ TARGET PROFILE PANEL ═══════════════ -->
+  <section id="panel-target" class="panel">
+    <div class="target-container">
+      <h2 class="search-title">🎯 Hedef Profili Oluştur</h2>
+      <p class="search-subtitle">Bildiğin her şeyi gir — platform kazısın, hepsini çıkarsın. Boş bırakılanlar taranmaz.</p>
+
+      <div class="target-form">
+
+        <!-- Kişisel Bilgiler -->
+        <div class="target-section">
+          <div class="target-section-header">👤 Kişisel Bilgiler</div>
+          <div class="target-fields">
+            <div class="target-field">
+              <label>İsim / Takma Ad</label>
+              <input type="text" class="target-inp" id="t-name" placeholder="Ad Soyad veya Takma Ad">
+            </div>
+            <div class="target-field">
+              <label>📧 Email</label>
+              <input type="email" class="target-inp" id="t-email" placeholder="hedef@ornek.com">
+            </div>
+            <div class="target-field">
+              <label>📞 Telefon</label>
+              <input type="text" class="target-inp" id="t-phone" placeholder="+90 5XX XXX XXXX">
+            </div>
+            <div class="target-field">
+              <label>🌐 Domain / Website</label>
+              <input type="text" class="target-inp" id="t-domain" placeholder="ornek.com">
+            </div>
+          </div>
+        </div>
+
+        <!-- Sosyal Medya -->
+        <div class="target-section">
+          <div class="target-section-header">📱 Sosyal Medya Hesapları</div>
+          <div class="target-fields">
+            <div class="target-field">
+              <label><span class="plat-ico">📸</span> Instagram</label>
+              <input type="text" class="target-inp" id="t-instagram" placeholder="@kullanici veya kullanici">
+            </div>
+            <div class="target-field">
+              <label><span class="plat-ico">🐦</span> Twitter / X</label>
+              <input type="text" class="target-inp" id="t-twitter" placeholder="@kullanici">
+            </div>
+            <div class="target-field">
+              <label><span class="plat-ico">▶️</span> YouTube</label>
+              <input type="text" class="target-inp" id="t-youtube" placeholder="@kanal veya youtube.com/@kanal">
+            </div>
+            <div class="target-field">
+              <label><span class="plat-ico">🎵</span> TikTok</label>
+              <input type="text" class="target-inp" id="t-tiktok" placeholder="@kullanici">
+            </div>
+            <div class="target-field">
+              <label><span class="plat-ico">💚</span> Spotify</label>
+              <input type="text" class="target-inp" id="t-spotify" placeholder="kullanici ID veya URL">
+            </div>
+            <div class="target-field">
+              <label><span class="plat-ico">🟠</span> Reddit</label>
+              <input type="text" class="target-inp" id="t-reddit" placeholder="u/kullanici veya kullanici">
+            </div>
+            <div class="target-field">
+              <label><span class="plat-ico">🐙</span> GitHub</label>
+              <input type="text" class="target-inp" id="t-github" placeholder="@kullanici">
+            </div>
+            <div class="target-field">
+              <label><span class="plat-ico">🎮</span> Steam</label>
+              <input type="text" class="target-inp" id="t-steam" placeholder="kullanici adı veya SteamID64">
+            </div>
+            <div class="target-field">
+              <label><span class="plat-ico">✈️</span> Telegram</label>
+              <input type="text" class="target-inp" id="t-telegram" placeholder="@kullanici veya kanal">
+            </div>
+            <div class="target-field">
+              <label><span class="plat-ico">💬</span> Discord</label>
+              <input type="text" class="target-inp" id="t-discord" placeholder="kullanici#tag veya nick">
+            </div>
+            <div class="target-field">
+              <label><span class="plat-ico">💼</span> LinkedIn</label>
+              <input type="text" class="target-inp" id="t-linkedin" placeholder="linkedin.com/in/kullanici">
+            </div>
+            <div class="target-field">
+              <label><span class="plat-ico">📘</span> Facebook</label>
+              <input type="text" class="target-inp" id="t-facebook" placeholder="facebook.com/kullanici">
+            </div>
+          </div>
+        </div>
+
+        <!-- Genel Kullanıcı Adı -->
+        <div class="target-section">
+          <div class="target-section-header">🔤 Genel Kullanıcı Adı</div>
+          <div class="target-fields">
+            <div class="target-field" style="grid-column:1/-1">
+              <label>Bilinen genel nick / kullanıcı adı (120+ sitede Sherlock ile taranır)</label>
+              <input type="text" class="target-inp" id="t-username" placeholder="genel_nick veya kullanici_adi">
+            </div>
+          </div>
+        </div>
+
+        <div class="target-scan-actions">
+          <button id="target-scan-btn" class="scan-btn">
+            <span class="scan-btn-icon">🎯</span>
+            <span class="scan-btn-text">HEDEFİ TARA</span>
+          </button>
+          <button id="target-clear-btn" class="clear-btn">✕ Temizle</button>
+          <div class="target-filled-count" id="target-filled-count"></div>
+        </div>
+      </div>
+
+      <!-- Target Progress -->
+      <div id="target-progress" style="display:none">
+        <div class="progress-header">
+          <span id="target-progress-label">Başlatılıyor...</span>
+          <span id="target-progress-pct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div id="target-progress-fill" class="progress-fill"></div>
+        </div>
+      </div>
+
+      <!-- Target Results -->
+      <div id="target-results" style="display:none">
+
+        <!-- Intel Summary -->
+        <div id="tcrd-correlation" class="intel-card" style="display:none">
+          <div class="intel-card-header">
+            <span>🧠 Hedef Intelligence Raporu</span>
+            <div class="export-btns">
+              <button class="export-btn" id="target-export-json">⬇️ JSON</button>
+              <button class="export-btn" id="target-export-html">📄 HTML</button>
+              <button class="export-btn" id="target-to-board-btn" title="Bulguları aktif soruşturma dosyasına aktar">📌 Masaya Aktar</button>
+              <span id="target-scan-time" class="scan-time"></span>
+            </div>
+          </div>
+          <div id="tbody-correlation" class="intel-body"></div>
+        </div>
+
+        <!-- Platform Cards Grid -->
+        <div class="platform-results-grid">
+
+          <!-- Instagram -->
+          <div id="tcrd-instagram" class="plat-card" style="display:none">
+            <div class="plat-card-header instagram-grad">
+              <span>📸 Instagram</span>
+              <span class="plat-status" id="pst-instagram"></span>
+            </div>
+            <div id="tbody-instagram" class="plat-card-body"></div>
+          </div>
+
+          <!-- Twitter -->
+          <div id="tcrd-twitter" class="plat-card" style="display:none">
+            <div class="plat-card-header twitter-grad">
+              <span>🐦 Twitter / X</span>
+              <span class="plat-status" id="pst-twitter"></span>
+            </div>
+            <div id="tbody-twitter" class="plat-card-body"></div>
+          </div>
+
+          <!-- YouTube -->
+          <div id="tcrd-youtube" class="plat-card" style="display:none">
+            <div class="plat-card-header youtube-grad">
+              <span>▶️ YouTube</span>
+              <span class="plat-status" id="pst-youtube"></span>
+            </div>
+            <div id="tbody-youtube" class="plat-card-body"></div>
+          </div>
+
+          <!-- TikTok -->
+          <div id="tcrd-tiktok" class="plat-card" style="display:none">
+            <div class="plat-card-header tiktok-grad">
+              <span>🎵 TikTok</span>
+              <span class="plat-status" id="pst-tiktok"></span>
+            </div>
+            <div id="tbody-tiktok" class="plat-card-body"></div>
+          </div>
+
+          <!-- Spotify -->
+          <div id="tcrd-spotify" class="plat-card" style="display:none">
+            <div class="plat-card-header spotify-grad">
+              <span>💚 Spotify</span>
+              <span class="plat-status" id="pst-spotify"></span>
+            </div>
+            <div id="tbody-spotify" class="plat-card-body"></div>
+          </div>
+
+          <!-- Steam -->
+          <div id="tcrd-steam" class="plat-card" style="display:none">
+            <div class="plat-card-header steam-grad">
+              <span>🎮 Steam</span>
+              <span class="plat-status" id="pst-steam"></span>
+            </div>
+            <div id="tbody-steam" class="plat-card-body"></div>
+          </div>
+
+          <!-- Telegram -->
+          <div id="tcrd-telegram" class="plat-card" style="display:none">
+            <div class="plat-card-header telegram-grad">
+              <span>✈️ Telegram</span>
+              <span class="plat-status" id="pst-telegram"></span>
+            </div>
+            <div id="tbody-telegram" class="plat-card-body"></div>
+          </div>
+
+          <!-- Reddit -->
+          <div id="tcrd-reddit" class="plat-card" style="display:none">
+            <div class="plat-card-header reddit-grad">
+              <span>📱 Reddit</span>
+              <span class="plat-status" id="pst-reddit"></span>
+            </div>
+            <div id="tbody-reddit" class="plat-card-body"></div>
+          </div>
+
+          <!-- GitHub -->
+          <div id="tcrd-github_deep" class="plat-card" style="display:none">
+            <div class="plat-card-header github-grad">
+              <span>🐙 GitHub</span>
+              <span class="plat-status" id="pst-github_deep"></span>
+            </div>
+            <div id="tbody-github_deep" class="plat-card-body"></div>
+          </div>
+
+          <!-- Phone -->
+          <div id="tcrd-phone" class="plat-card" style="display:none">
+            <div class="plat-card-header phone-grad">
+              <span>📞 Telefon Analizi</span>
+              <span class="plat-status" id="pst-phone"></span>
+            </div>
+            <div id="tbody-phone" class="plat-card-body"></div>
+          </div>
+
+          <!-- Gravatar -->
+          <div id="tcrd-gravatar" class="plat-card" style="display:none">
+            <div class="plat-card-header gravatar-grad">
+              <span>🖼️ Gravatar</span>
+              <span class="plat-status" id="pst-gravatar"></span>
+            </div>
+            <div id="tbody-gravatar" class="plat-card-body"></div>
+          </div>
+
+          <!-- Email -->
+          <div id="tcrd-email_validator" class="plat-card" style="display:none">
+            <div class="plat-card-header email-grad">
+              <span>📧 Email Analizi</span>
+              <span class="plat-status" id="pst-email_validator"></span>
+            </div>
+            <div id="tbody-email_validator" class="plat-card-body"></div>
+          </div>
+
+        </div><!-- platform-results-grid -->
+
+        <!-- Full width cards -->
+        <div id="tcrd-pastebin" class="result-card" style="display:none">
+          <div class="card-header"><span class="card-icon">📋</span><span class="card-title">Paste & Stealer Logs</span><span class="card-badge" id="tbadge-pastebin"></span></div>
+          <div id="tbody-pastebin" class="card-body"></div>
+        </div>
+
+        <div id="tcrd-crt_search" class="result-card" style="display:none">
+          <div class="card-header"><span class="card-icon">🔏</span><span class="card-title">crt.sh SSL Sertifika Kayıtları</span><span class="card-badge" id="tbadge-crt_search"></span></div>
+          <div id="tbody-crt_search" class="card-body"></div>
+        </div>
+
+        <div id="tcrd-dork_gen" class="result-card" style="display:none">
+          <div class="card-header"><span class="card-icon">🔗</span><span class="card-title">Dork Generator</span><span class="card-badge" id="tbadge-dork_gen"></span></div>
+          <div id="tbody-dork_gen" class="card-body"></div>
+        </div>
+
+        <div id="tcrd-exif_analysis" class="result-card" style="display:none">
+          <div class="card-header"><span class="card-icon">🖼️</span><span class="card-title">Avatar EXIF Metadata</span><span class="card-badge" id="tbadge-exif_analysis"></span></div>
+          <div id="tbody-exif_analysis" class="card-body"></div>
+        </div>
+
+      </div><!-- target-results -->
+
+      <!-- Target Log -->
+      <div id="target-log-section" style="display:none" class="log-section">
+        <div class="log-header">
+          <span>📡 Canlı Log</span>
+          <button id="target-log-clear" class="log-clear-btn">Temizle</button>
+        </div>
+        <div id="target-log-body" class="log-body"></div>
+      </div>
+
+    </div><!-- target-container -->
+  </section>
+
+  <!-- ═══════════════ SORUŞTURMA MASASI ═══════════════ -->
+  <section id="panel-board" class="panel">
+    <div class="board-shell">
+      <div class="case-tabs" id="case-tabs"></div>
+      <div class="board-toolbar">
+        <span class="tb-label">Ekle:</span>
+        <span id="board-add-btns" class="tb-group"></span>
+        <span class="tb-sep"></span>
+        <button class="tb-btn" id="bt-undo" title="Geri al (Ctrl+Z)">↶ Geri Al</button>
+        <button class="tb-btn" id="bt-layout" title="Kartları otomatik düzenle">🧲 Otomatik Diz</button>
+        <button class="tb-btn" id="bt-fit" title="Hepsini ekrana sığdır">⛶ Sığdır</button>
+        <button class="tb-btn" id="bt-zoom-out" title="Uzaklaş">−</button>
+        <button class="tb-btn" id="bt-zoom-in" title="Yakınlaş">+</button>
+        <span class="tb-sep"></span>
+        <button class="tb-btn" id="bt-export" title="Dosyayı JSON olarak indir">📤 JSON</button>
+        <input type="search" id="board-search" class="hist-search board-search" placeholder="Masada ara..." autocomplete="off">
+      </div>
+      <div class="board-main">
+        <div class="board-view" id="board-view">
+          <div class="board-world" id="board-world">
+            <svg id="board-svg" class="board-svg"></svg>
+            <div id="board-nodes"></div>
+          </div>
+          <div class="board-empty" id="board-empty">
+            <div>🗂️</div>
+            <p>Masa boş. Yukarıdan bir kart ekle, ya da bir taramadan <b>📌 Masaya Aktar</b> de.</p>
+            <p class="board-tip">Kartın üstündeki kırmızı iğneyi başka karta sürükle → iplik bağlanır.</p>
+          </div>
+        </div>
+        <aside class="board-side" id="board-side"></aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ HISTORY PANEL ═══════════════ -->
+  <section id="panel-history" class="panel">
+    <div class="panel-title">📜 Arama Geçmişi</div>
+    <div class="hist-toolbar">
+      <input type="search" id="hist-search" class="hist-search" placeholder="Email, kullanıcı adı veya domain ara..." autocomplete="off">
+      <button id="hist-clear-all" class="clear-btn">🗑 Tümünü Sil</button>
+    </div>
+    <div id="history-list" class="history-list">
+      <div class="empty-state">Yükleniyor...</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ ABOUT PANEL ═══════════════ -->
+  <section id="panel-about" class="panel">
+    <div class="about-wrap">
+      <h1 class="about-title">🛡️ MailReaper <span class="accent">v{{ version }}</span></h1>
+      <p class="about-sub">Email + Username + Domain → Tek platformda tüm OSINT</p>
+      <div class="about-grid">
+        <div class="about-card"><span class="about-icon">🕵️</span><h3>Sherlock Engine</h3><p>120+ platformda eşzamanlı kullanıcı adı araması — GitHub, Instagram, Reddit, Steam ve daha fazlası</p></div>
+        <div class="about-card"><span class="about-icon">🔏</span><h3>crt.sh</h3><p>SSL sertifika şeffaflık logları üzerinden email, domain ve subdomain keşfi</p></div>
+        <div class="about-card"><span class="about-icon">🕰️</span><h3>Wayback Machine</h3><p>Internet Archive CDX API ile profillerin ve domainlerin tarihsel arşiv geçmişi</p></div>
+        <div class="about-card"><span class="about-icon">📱</span><h3>Reddit Deep</h3><p>Public API ile kullanıcı karma, post geçmişi, yorum istatistikleri ve subreddit haritası</p></div>
+        <div class="about-card"><span class="about-icon">🐙</span><h3>GitHub Deep</h3><p>Repo listesi, programlama dilleri, organizasyonlar, son aktiviteler, commit email tespiti</p></div>
+        <div class="about-card"><span class="about-icon">🖼️</span><h3>EXIF Analyzer</h3><p>Profil fotoğraflarını indirir, EXIF metadata, boyut, format bilgisi çıkarır; tersine görüntü arama linkleri üretir</p></div>
+        <div class="about-card"><span class="about-icon">🔗</span><h3>Dork Generator</h3><p>Google, Bing, GitHub, Shodan için 30+ hazır dork sorgusu — email, username, domain ve isme özel</p></div>
+        <div class="about-card"><span class="about-icon">🧠</span><h3>Korelasyon</h3><p>Tüm modüllerin bulgularını çapraz referanslar: isim eşleşmeleri, platform bağlantıları, D3.js ağ grafiği</p></div>
+        <div class="about-card"><span class="about-icon">🔴</span><h3>Stealer Logs</h3><p>HudsonRock ücretsiz API + psbdmp + paste.ee üzerinden sızıntı ve stealer log tespiti</p></div>
+        <div class="about-card"><span class="about-icon">🌐</span><h3>DNS/WHOIS/SSL</h3><p>Tam DNS analizi, SPF/DMARC/DKIM, SSL sertifika detayları, WHOIS kayıt bilgileri</p></div>
+        <div class="about-card"><span class="about-icon">🛰️</span><h3>Web Recon</h3><p>Teknoloji parmak izi, güvenlik başlığı notu, robots/security.txt, favicon hash, sayfadan email ve sosyal link çıkarma</p></div>
+        <div class="about-card"><span class="about-icon">📡</span><h3>IP / ASN</h3><p>A/AAAA çözümleme, reverse DNS, ASN ve ağ sahibi — yalnızca DNS ile, API gerektirmez</p></div>
+        <div class="about-card"><span class="about-icon">⚡</span><h3>Paralel Motor</h3><p>Tüm modüller eşzamanlı çalışır, sonuçlar bittikçe ekrana düşer; Sherlock güven skoru ve soft-404 tespiti yapar</p></div>
+        <div class="about-card"><span class="about-icon">🔌</span><h3>SMTP Probe</h3><p>Gerçek SMTP bağlantısı, catch-all tespiti, TLS desteği kontrolü</p></div>
+        <div class="about-card"><span class="about-icon">⚠️</span><h3>Risk Skoru</h3><p>16 modülün çıktısından hesaplanan 0-100 risk puanı, A-F derecesi, kategori bazlı analiz</p></div>
+      </div>
+      <div class="disclaimer">⚠️ Bu araç yalnızca eğitim ve araştırma amaçlıdır. Yalnızca kendi hesaplarınızı veya izin verilen hedefleri tarayın. Yasadışı kullanımdan kullanıcı sorumludur.</div>
+    </div>
+  </section>
+
+</main>
+
+  <footer class="statusbar">
+    <span id="status-text">Hazır</span>
+    <span class="status-sep"></span>
+    <span id="status-right">127.0.0.1:5001 &middot; yerel</span>
+  </footer>
+</div><!-- /win -->
+</div><!-- /desktop -->
+
+<!-- START MENU -->
+<div id="start-menu" class="start-menu" style="display:none">
+  <div class="start-left">
+    <button class="start-item" data-panel="scan"><span>🔍</span> Hızlı Tara</button>
+    <button class="start-item" data-panel="target"><span>🎯</span> Hedef Profili</button>
+    <button class="start-item" data-panel="board"><span>🗂️</span> Soruşturma Masası</button>
+    <button class="start-item" data-panel="history"><span>📜</span> Geçmiş</button>
+    <button class="start-item" data-panel="about"><span>ℹ️</span> Hakkında</button>
+    <button class="start-item" id="start-theme"><span>🎨</span> Kişiselleştir</button>
+  </div>
+  <div class="start-right">
+    <div class="start-user">MailReaper</div>
+    <a class="start-link" href="/api/health" target="_blank">Sistem durumu</a>
+    <a class="start-link" href="/api/history" target="_blank">Geçmiş (JSON)</a>
+  </div>
+</div>
+
+<!-- TASKBAR -->
+<div class="taskbar">
+  <button id="start-orb" class="start-orb" title="Başlat"><span>⊞</span></button>
+  <div class="task-items">
+    <button class="task-btn active" id="task-main"><span>🛡️</span> MailReaper</button>
+  </div>
+  <div class="tray">
+    <span class="tray-ico" title="Yerel sunucu bağlı">🟢</span>
+    <div class="clock"><span id="clock-time">--:--</span><span id="clock-date"></span></div>
+    <span class="show-desktop" title="Masaüstünü göster"></span>
+  </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+<script src="/static/js/board.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+*.egg-info/
+
+# Yerel veriler — kişisel arama geçmişi ve soruşturma dosyaları repoya girmez
+database/*
+!database/.gitkeep
+exports/*
+!exports/.gitkeep
+*.db
+*.db-wal
+*.db-shm
+*.sqlite3
+
+# Ortam / sırlar
+.env
+.env.*
+*.key
+*.pem
+
+# Tarayıcı oturumları (çerez içerir)
+*_session/
+**/Default/
+
+# Editör / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
